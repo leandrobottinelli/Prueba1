@@ -1,0 +1,157 @@
+     1                                  GLOBAL TAREA_2
+     2                                  GLOBAL TSS_TAREA_2
+     3                                  GLOBAL _TSS_2_eax
+     4                                  GLOBAL _TSS_2_ebx
+     5                                  GLOBAL _TSS_2_ecx
+     6                                  GLOBAL _TSS_2_edx
+     7                                  GLOBAL _TSS_2_edi
+     8                                  GLOBAL _TSS_2_esi
+     9                                  GLOBAL _TSS_2_ebp
+    10                                  GLOBAL _TSS_2_esp
+    11                                  GLOBAL _TSS_2_eip
+    12                                  GLOBAL _TSS_2_eflags
+    13                                  GLOBAL _TSS_2_cs
+    14                                  GLOBAL _TSS_2_ds
+    15                                  GLOBAL _TSS_2_es
+    16                                  GLOBAL _TSS_2_ss
+    17                                  
+    18                                  EXTERN __FIN_PILA_NUCLEO_TAREA_2
+    19                                  EXTERN __FIN_PILA_USUARIO_TAREA_2
+    20                                  
+    21                                  EXTERN cs_sel_32_usuario
+    22                                  EXTERN ds_sel_32_usuario
+    23                                  EXTERN ds_sel_32_nucleo
+    24                                  
+    25                                  
+    26                                  EXTERN _NUMERO_TOTAL
+    27                                  
+    28                                  EXTERN _ENTRADA_TABLA
+    29                                  EXTERN __INICIO_RAM_TABLA_DIGITOS
+    30                                  
+    31                                  
+    32                                  
+    33                                  
+    34                                  ;/////////////////////////////////////////////////////////////////////////////////////////////////
+    35                                  ;-------------------------------------------------------------------------------------------------
+    36                                  section .text_tarea_2
+    37                                  USE32
+    38                                  
+    39                                  TAREA_2:
+    40                                  
+    41                                  ;    mov eax, 0x00
+    42                                  ;    mov edx, __INICIO_RAM_TABLA_DIGITOS + 0x10  ; Comienzo desde lel primero numero de la tabla
+    43                                  ;    mov [_NUMERO_TOTAL], eax                    ; Pongo en cero la parte baja de la suma total
+    44                                  ;    mov [_NUMERO_TOTAL + 0x04], eax             ; Pongo en cero la parte alta de la suma total
+    45                                  ;
+    46                                  ;
+    47                                  ;    LP:
+    48                                  ;    cmp edx, [_ENTRADA_TABLA]                   ; Chequeo si el puntero es siguiente numero de la tabla a cargar 
+    49                                  ;    jz FIN                                ; Dejo de sumar y vuelvo
+    50                                  ;    mov eax,[edx]                            
+    51                                  ;    add [_NUMERO_TOTAL], eax                    ; Sumo la parte baja del numero nuevo al total
+    52                                  ;    mov eax,[edx+0x04]                          ; Copio la parte alta del numero nuevo
+    53                                  ;    jc CARRY                                    ; Si la suma de la parte baja tiene carry lo sumo en la parte alta
+    54                                  ;    jmp N_CARRY   
+    55                                  ;
+    56                                  ;
+    57                                  ;
+    58                                  ;    CARRY: 
+    59                                  ;    add byte[_NUMERO_TOTAL+0x04], 0x01          ; Caso de carry en la parte baja, lo sumo a la parte alta
+    60                                  ;
+    61                                  ;
+    62                                  ;
+    63                                  ;    N_CARRY:
+    64                                  ;    add [_NUMERO_TOTAL+0x04], eax               ; Sumo la parte alta del numero nuevo al total
+    65                                  ;    add edx , 0x10                              ; Corro el puntero al siguiente numero de la tabla
+    66                                  ;
+    67                                  ;    jmp LP
+    68                                  ;
+    69                                  ;    FIN:
+    70                                  ;    hlt
+    71 00000000 EBFE                        jmp TAREA_2
+    72                                  
+    73                                  ;-------------------------------------------------------------------------------------------------
+    74                                  ;/////////////////////////////////////////////////////////////////////////////////////////////////
+    75                                  
+    76                                  section .tss_tarea_2
+    77                                  USE32
+    78                                  
+    79                                  TSS_TAREA_2:
+    80                                  
+    81 00000000 <res 00000004>              _TSS_2_reservado:      resw 2 
+    81          ******************       warning: uninitialized space declared in non-BSS section `.tss_tarea_2': zeroing
+    82 00000004 [00000000]                  _TSS_2_esp_0:          dd __FIN_PILA_NUCLEO_TAREA_2
+    83 00000008 [0000]                      _TSS_2_ss_0:           dw ds_sel_32_nucleo    
+    84 0000000A <res 00000002>              _TSS_2_reservado_0:    resw 1 
+    84          ******************       warning: uninitialized space declared in non-BSS section `.tss_tarea_2': zeroing
+    85 0000000C <res 00000004>              _TSS_2_esp_1:          resw 2 
+    85          ******************       warning: uninitialized space declared in non-BSS section `.tss_tarea_2': zeroing
+    86 00000010 <res 00000002>              _TSS_2_ss_1:           resw 1 
+    86          ******************       warning: uninitialized space declared in non-BSS section `.tss_tarea_2': zeroing
+    87 00000012 <res 00000002>              _TSS_2_reservado_1:    resw 1 
+    87          ******************       warning: uninitialized space declared in non-BSS section `.tss_tarea_2': zeroing
+    88 00000014 <res 00000004>              _TSS_2_esp_2:          resw 2 
+    88          ******************       warning: uninitialized space declared in non-BSS section `.tss_tarea_2': zeroing
+    89 00000018 <res 00000002>              _TSS_2_ss_2:           resw 1 
+    89          ******************       warning: uninitialized space declared in non-BSS section `.tss_tarea_2': zeroing
+    90 0000001A <res 00000002>              _TSS_2_reservado_2:    resw 1 
+    90          ******************       warning: uninitialized space declared in non-BSS section `.tss_tarea_2': zeroing
+    91 0000001C <res 00000004>              _TSS_2_cr3:            resw 2 
+    91          ******************       warning: uninitialized space declared in non-BSS section `.tss_tarea_2': zeroing
+    92 00000020 [00000000]                  _TSS_2_eip:            dd TAREA_2
+    93 00000024 02020000                    _TSS_2_eflags:         dd 0x202
+    94 00000028 <res 00000004>              _TSS_2_eax:            resw 2 
+    94          ******************       warning: uninitialized space declared in non-BSS section `.tss_tarea_2': zeroing
+    95 0000002C <res 00000004>              _TSS_2_ecx:            resw 2 
+    95          ******************       warning: uninitialized space declared in non-BSS section `.tss_tarea_2': zeroing
+    96 00000030 <res 00000004>              _TSS_2_edx:            resw 2 
+    96          ******************       warning: uninitialized space declared in non-BSS section `.tss_tarea_2': zeroing
+    97 00000034 <res 00000004>              _TSS_2_ebx:            resw 2 
+    97          ******************       warning: uninitialized space declared in non-BSS section `.tss_tarea_2': zeroing
+    98 00000038 [00000000]                  _TSS_2_esp:            dd __FIN_PILA_USUARIO_TAREA_2
+    99 0000003C <res 00000004>              _TSS_2_ebp:            resw 2 
+    99          ******************       warning: uninitialized space declared in non-BSS section `.tss_tarea_2': zeroing
+   100 00000040 <res 00000004>              _TSS_2_esi:            resw 2 
+   100          ******************       warning: uninitialized space declared in non-BSS section `.tss_tarea_2': zeroing
+   101 00000044 <res 00000004>              _TSS_2_edi:            resw 2
+   101          ******************       warning: uninitialized space declared in non-BSS section `.tss_tarea_2': zeroing
+   102 00000048 [0000]                      _TSS_2_es:             dw ds_sel_32_usuario
+   103 0000004A <res 00000002>              _TSS_2_reservado_es:   resw 1
+   103          ******************       warning: uninitialized space declared in non-BSS section `.tss_tarea_2': zeroing
+   104 0000004C [0000]                      _TSS_2_cs:             dw cs_sel_32_usuario     
+   105 0000004E <res 00000002>              _TSS_2_reservado_cs:   resw 1
+   105          ******************       warning: uninitialized space declared in non-BSS section `.tss_tarea_2': zeroing
+   106 00000050 [0000]                      _TSS_2_ss:             dw ds_sel_32_usuario
+   107 00000052 <res 00000002>              _TSS_2_reservado_ss:   resw 1
+   107          ******************       warning: uninitialized space declared in non-BSS section `.tss_tarea_2': zeroing
+   108 00000054 [0000]                      _TSS_2_ds:             dw ds_sel_32_usuario
+   109 00000056 <res 00000002>              _TSS_2_reservado_ds:   resw 1
+   109          ******************       warning: uninitialized space declared in non-BSS section `.tss_tarea_2': zeroing
+   110                                  
+   111                                  
+   112                                  ;-------------------------------------------------------------------------------------------------
+   113                                  ;/////////////////////////////////////////////////////////////////////////////////////////////////
+   114                                  
+   115                                  section .data_tarea_2
+   116                                  USE32
+   117                                  
+   118                                  
+   119                                  
+   120                                  
+   121                                  
+   122                                  
+   123                                  
+   124                                  ;-------------------------------------------------------------------------------------------------
+   125                                  ;/////////////////////////////////////////////////////////////////////////////////////////////////
+   126                                  
+   127                                  section .bss_tarea_2 nobits
+   128                                  USE32
+   129                                  ;_NUMERO_TOTAL: resq 2
+   130                                  
+   131                                  
+   132                                  
+   133                                  
+   134                                  
+   135                                  
+   136                                  ;-------------------------------------------------------------------------------------------------
+   137                                  ;/////////////////////////////////////////////////////////////////////////////////////////////////

@@ -1,0 +1,652 @@
+     1                                  GLOBAL PAGINACION_INIT
+     2                                  GLOBAL PAGINACION
+     3                                  EXTERN _CONTADOR_TABLAS_PAGINAS
+     4                                  
+     5                                  
+     6                                  EXTERN __INICIO_RAM_RUTINAS
+     7                                  EXTERN __INICIO_RAM_NUCLEO
+     8                                  EXTERN __INICIO_RAM_SYS_TABLES
+     9                                  EXTERN __INICIO_RAM_ISR
+    10                                  EXTERN __INICIO_RAM_TABLA_DIGITOS
+    11                                  EXTERN __INICIO_RAM_TEXT_TAREA_0
+    12                                  EXTERN __INICIO_RAM_TEXT_TAREA_1
+    13                                  EXTERN __INICIO_RAM_TEXT_TAREA_2
+    14                                  EXTERN __INICIO_RAM_DATOS
+    15                                  EXTERN __INICIO_RAM_BSS
+    16                                  EXTERN __INICIO_RAM_TSS_TAREA_0
+    17                                  EXTERN __INICIO_RAM_TSS_TAREA_1
+    18                                  EXTERN __INICIO_RAM_TSS_TAREA_2
+    19                                  EXTERN __INICIO_ROM
+    20                                  
+    21                                  EXTERN __DIR_FISICA_PAGE_TABLES_0
+    22                                  EXTERN __DIR_FISICA_PAGE_TABLES_1
+    23                                  EXTERN __DIR_FISICA_PAGE_TABLES_2
+    24                                  
+    25                                  
+    26                                  EXTERN __DIR_FISICA_ISR            
+    27                                  EXTERN __DIR_FISICA_VIDEO         
+    28                                  EXTERN __DIR_FISICA_SYS_TABLES    
+    29                                  EXTERN __DIR_FISICA_NUCLEO        
+    30                                  EXTERN __DIR_FISICA_TABLA_DIGITOS 
+    31                                  EXTERN __DIR_FISICA_TEXT_TAREA_0  
+    32                                  EXTERN __DIR_FISICA_BSS_TAREA_0  
+    33                                  EXTERN __DIR_FISICA_DATA_TAREA_0 
+    34                                  EXTERN __DIR_FISICA_TSS_TAREA_0 
+    35                                  EXTERN __DIR_FISICA_TEXT_TAREA_1  
+    36                                  EXTERN __DIR_FISICA_BSS_TAREA_1
+    37                                  EXTERN __DIR_FISICA_TSS_TAREA_1   
+    38                                  EXTERN __DIR_FISICA_DATA_TAREA_1  
+    39                                  EXTERN __DIR_FISICA_TEXT_TAREA_2  
+    40                                  EXTERN __DIR_FISICA_BSS_TAREA_2  
+    41                                  EXTERN __DIR_FISICA_DATA_TAREA_2
+    42                                  EXTERN __DIR_FISICA_TSS_TAREA_2  
+    43                                  EXTERN __DIR_FISICA_DATOS         
+    44                                  EXTERN __DIR_FISICA_RUTINAS
+    45                                  EXTERN __DIR_FISICA_BSS       
+    46                                  
+    47                                  
+    48                                  EXTERN __LONGITUD_ISR
+    49                                  EXTERN __LONGITUD_SYS_TABLES
+    50                                  EXTERN __LONGITUD_PAGE_TABLES
+    51                                  EXTERN __LONGITUD_TABLA_DIGITOS
+    52                                  EXTERN __LONGITUD_TEXT_TAREA_0
+    53                                  EXTERN __LONGITUD_TEXT_TAREA_1
+    54                                  EXTERN __LONGITUD_TEXT_TAREA_2
+    55                                  EXTERN __LONGITUD_DATOS
+    56                                  EXTERN __LONGITUD_BSS
+    57                                  EXTERN __LONGITUD_RUTINAS
+    58                                  EXTERN __LONGITUD_NUCLEO
+    59                                  EXTERN __LONGITUD_INIT
+    60                                  EXTERN __LONGITUD_TSS_TAREA_0
+    61                                  EXTERN __LONGITUD_TSS_TAREA_1
+    62                                  EXTERN __LONGITUD_TSS_TAREA_2
+    63                                  
+    64                                  EXTERN __DIR_LINEAL_VIDEO
+    65                                  
+    66                                  EXTERN __SIZE_PILA_NUCLEO
+    67                                  EXTERN __INICIO_PILA_NUCLEO
+    68                                  
+    69                                  EXTERN __INICIO_PILA_NUCLEO_TAREA_0
+    70                                  EXTERN __INICIO_PILA_USUARIO_TAREA_0
+    71                                  EXTERN __SIZE_PILA_NUCLEO_TAREA_0
+    72                                  EXTERN __SIZE_PILA_USUARIO_TAREA_0
+    73                                  EXTERN __DIR_FISICA_PILA_NUCLEO_TAREA_0
+    74                                  EXTERN __DIR_FISICA_PILA_USUARIO_TAREA_0
+    75                                  
+    76                                  EXTERN __INICIO_PILA_NUCLEO_TAREA_1
+    77                                  EXTERN __INICIO_PILA_USUARIO_TAREA_1
+    78                                  EXTERN __SIZE_PILA_NUCLEO_TAREA_1
+    79                                  EXTERN __SIZE_PILA_USUARIO_TAREA_1
+    80                                  EXTERN __DIR_FISICA_PILA_NUCLEO_TAREA_1
+    81                                  EXTERN __DIR_FISICA_PILA_USUARIO_TAREA_1
+    82                                  
+    83                                  EXTERN __INICIO_PILA_NUCLEO_TAREA_2
+    84                                  EXTERN __INICIO_PILA_USUARIO_TAREA_2
+    85                                  EXTERN __SIZE_PILA_NUCLEO_TAREA_2
+    86                                  EXTERN __SIZE_PILA_USUARIO_TAREA_2
+    87                                  EXTERN __DIR_FISICA_PILA_NUCLEO_TAREA_2
+    88                                  EXTERN __DIR_FISICA_PILA_USUARIO_TAREA_2
+    89                                  
+    90                                  
+    91                                  ;----------------------------------------------------------------------------------------
+    92                                  
+    93                                  %define ATRIBUTOS_DIRECTORIO    0x7
+    94                                  %define ATRIBUTOS_TABLA_S_R_P   0x1
+    95                                  %define ATRIBUTOS_TABLA_S_RW_P  0x3
+    96                                  %define ATRIBUTOS_TABLA_US_R_P  0x5
+    97                                  %define ATRIBUTOS_TABLA_US_RW_P 0x7
+    98                                  
+    99                                  ;----------------------------------------------------------------------------------------
+   100                                  
+   101                                  section .rutinas
+   102                                  USE32
+   103                                  
+   104                                    PAGINACION_INIT:
+   105 00000000 89E5                      mov ebp, esp  
+   106                                   
+   107                                  
+   108                                    PAGINACION_DIRECTORIO_0:
+   109                                  
+   110 00000002 68[00000000]              push __DIR_FISICA_PAGE_TABLES_0
+   111 00000007 E8BC010000                call PAGINACION_DIRECTORIO_N            ; Paginacion de las paginas de kernel para el directorio 0
+   112 0000000C 58                        pop eax
+   113                                  
+   114                                  
+   115 0000000D 68[00000000]              push  __DIR_FISICA_PAGE_TABLES_0
+   116 00000012 6A07                      push  ATRIBUTOS_DIRECTORIO
+   117 00000014 6A03                      push  ATRIBUTOS_TABLA_S_RW_P
+   118 00000016 68[00000000]              push  __LONGITUD_TEXT_TAREA_0
+   119 0000001B 68[00000000]              push  __DIR_FISICA_TEXT_TAREA_0
+   120 00000020 68[00000000]              push  __INICIO_RAM_TEXT_TAREA_0
+   121                                  
+   122 00000025 E823030000                call PAGINACION
+   123                                    
+   124 0000002A 58                        pop eax
+   125 0000002B 58                        pop eax
+   126 0000002C 58                        pop eax
+   127 0000002D 58                        pop eax
+   128 0000002E 58                        pop eax
+   129 0000002F 58                        pop eax
+   130                                  
+   131                                  
+   132                                  
+   133 00000030 68[00000000]              push  __DIR_FISICA_PAGE_TABLES_0
+   134 00000035 6A07                      push  ATRIBUTOS_DIRECTORIO   
+   135 00000037 6A03                      push  ATRIBUTOS_TABLA_S_RW_P   
+   136 00000039 68[00000000]              push  __SIZE_PILA_NUCLEO_TAREA_0
+   137 0000003E 68[00000000]              push  __DIR_FISICA_PILA_NUCLEO_TAREA_0
+   138 00000043 68[00000000]              push  __INICIO_PILA_NUCLEO_TAREA_0
+   139                                  
+   140 00000048 E800030000                call PAGINACION
+   141                                    
+   142 0000004D 58                        pop eax
+   143 0000004E 58                        pop eax
+   144 0000004F 58                        pop eax
+   145 00000050 58                        pop eax
+   146 00000051 58                        pop eax
+   147 00000052 58                        pop eax
+   148                                  
+   149 00000053 68[00000000]              push  __DIR_FISICA_PAGE_TABLES_0
+   150 00000058 6A07                      push  ATRIBUTOS_DIRECTORIO
+   151 0000005A 6A03                      push  ATRIBUTOS_TABLA_S_RW_P
+   152 0000005C 68[00000000]              push  __SIZE_PILA_USUARIO_TAREA_0 
+   153 00000061 68[00000000]              push  __DIR_FISICA_PILA_USUARIO_TAREA_0
+   154 00000066 68[00000000]              push  __INICIO_PILA_USUARIO_TAREA_0
+   155                                  
+   156 0000006B E8DD020000                call PAGINACION
+   157                                    
+   158 00000070 58                        pop eax
+   159 00000071 58                        pop eax
+   160 00000072 58                        pop eax
+   161 00000073 58                        pop eax
+   162 00000074 58                        pop eax
+   163 00000075 58                        pop eax
+   164                                  
+   165                                  
+   166                                  
+   167 00000076 68[00000000]              push  __DIR_FISICA_PAGE_TABLES_0
+   168 0000007B 6A07                      push  ATRIBUTOS_DIRECTORIO
+   169 0000007D 6A03                      push  ATRIBUTOS_TABLA_S_RW_P
+   170 0000007F 68[00000000]              push  __LONGITUD_TSS_TAREA_0 
+   171 00000084 68[00000000]              push  __DIR_FISICA_TSS_TAREA_0
+   172 00000089 68[00000000]              push  __INICIO_RAM_TSS_TAREA_0
+   173                                  
+   174 0000008E E8BA020000                call PAGINACION
+   175                                    
+   176 00000093 58                        pop eax
+   177 00000094 58                        pop eax
+   178 00000095 58                        pop eax
+   179 00000096 58                        pop eax
+   180 00000097 58                        pop eax
+   181 00000098 58                        pop eax
+   182                                  
+   183                                  
+   184                                  ;---------------------------------------------------------------------------------------------------
+   185                                  
+   186                                  
+   187                                    PAGINACION_DIRECTORIO_1:
+   188                                  
+   189 00000099 68[00000000]              push __DIR_FISICA_PAGE_TABLES_1
+   190 0000009E E825010000                call PAGINACION_DIRECTORIO_N                    ; Paginacion de las paginas de kernel para el directorio 1
+   191 000000A3 58                        pop eax
+   192                                  
+   193 000000A4 68[00000000]              push  __DIR_FISICA_PAGE_TABLES_1
+   194 000000A9 6A07                      push  ATRIBUTOS_DIRECTORIO
+   195 000000AB 6A07                      push  ATRIBUTOS_TABLA_US_RW_P
+   196 000000AD 68[00000000]              push  __LONGITUD_TEXT_TAREA_1
+   197 000000B2 68[00000000]              push  __DIR_FISICA_TEXT_TAREA_1
+   198 000000B7 68[00000000]              push  __INICIO_RAM_TEXT_TAREA_1
+   199                                  
+   200                                  
+   201 000000BC E88C020000                call PAGINACION
+   202                                    
+   203 000000C1 58                        pop eax
+   204 000000C2 58                        pop eax
+   205 000000C3 58                        pop eax
+   206 000000C4 58                        pop eax
+   207 000000C5 58                        pop eax
+   208 000000C6 58                        pop eax
+   209                                  
+   210                                  
+   211 000000C7 68[00000000]              push  __DIR_FISICA_PAGE_TABLES_1
+   212 000000CC 6A07                      push  ATRIBUTOS_DIRECTORIO
+   213 000000CE 6A03                      push  ATRIBUTOS_TABLA_S_RW_P
+   214 000000D0 68[00000000]              push  __SIZE_PILA_NUCLEO_TAREA_1 
+   215 000000D5 68[00000000]              push  __DIR_FISICA_PILA_NUCLEO_TAREA_1
+   216 000000DA 68[00000000]              push  __INICIO_PILA_NUCLEO_TAREA_1
+   217                                  
+   218                                  
+   219 000000DF E869020000                call PAGINACION
+   220                                    
+   221 000000E4 58                        pop eax
+   222 000000E5 58                        pop eax
+   223 000000E6 58                        pop eax
+   224 000000E7 58                        pop eax
+   225 000000E8 58                        pop eax
+   226 000000E9 58                        pop eax
+   227                                  
+   228 000000EA 68[00000000]              push  __DIR_FISICA_PAGE_TABLES_1
+   229 000000EF 6A07                      push  ATRIBUTOS_DIRECTORIO
+   230 000000F1 6A07                      push  ATRIBUTOS_TABLA_US_RW_P
+   231 000000F3 68[00000000]              push  __SIZE_PILA_USUARIO_TAREA_1 
+   232 000000F8 68[00000000]              push  __DIR_FISICA_PILA_USUARIO_TAREA_1
+   233 000000FD 68[00000000]              push  __INICIO_PILA_USUARIO_TAREA_1
+   234                                  
+   235                                  
+   236 00000102 E846020000                call PAGINACION
+   237                                    
+   238 00000107 58                        pop eax
+   239 00000108 58                        pop eax
+   240 00000109 58                        pop eax
+   241 0000010A 58                        pop eax
+   242 0000010B 58                        pop eax
+   243 0000010C 58                        pop eax
+   244                                  
+   245                                  
+   246 0000010D 68[00000000]              push  __DIR_FISICA_PAGE_TABLES_1
+   247 00000112 6A07                      push  ATRIBUTOS_DIRECTORIO
+   248 00000114 6A03                      push  ATRIBUTOS_TABLA_S_RW_P
+   249 00000116 68[00000000]              push  __LONGITUD_TSS_TAREA_1 
+   250 0000011B 68[00000000]              push  __DIR_FISICA_TSS_TAREA_1
+   251 00000120 68[00000000]              push  __INICIO_RAM_TSS_TAREA_1
+   252                                  
+   253 00000125 E823020000                call PAGINACION
+   254                                    
+   255 0000012A 58                        pop eax
+   256 0000012B 58                        pop eax
+   257 0000012C 58                        pop eax
+   258 0000012D 58                        pop eax
+   259 0000012E 58                        pop eax
+   260 0000012F 58                        pop eax
+   261                                  
+   262                                  
+   263                                  ;---------------------------------------------------------------------------------------------------
+   264                                  
+   265                                    PAGINACION_DIRECTORIO_2:
+   266                                  
+   267 00000130 68[00000000]              push __DIR_FISICA_PAGE_TABLES_2
+   268 00000135 E88E000000                call PAGINACION_DIRECTORIO_N                            ; Paginacion de las paginas de kernel para el directorio 2
+   269 0000013A 58                        pop eax
+   270                                  
+   271 0000013B 68[00000000]              push  __DIR_FISICA_PAGE_TABLES_2
+   272 00000140 6A07                      push  ATRIBUTOS_DIRECTORIO
+   273 00000142 6A07                      push  ATRIBUTOS_TABLA_US_RW_P
+   274 00000144 68[00000000]              push  __LONGITUD_TEXT_TAREA_2
+   275 00000149 68[00000000]              push  __DIR_FISICA_TEXT_TAREA_2
+   276 0000014E 68[00000000]              push  __INICIO_RAM_TEXT_TAREA_2
+   277                                  
+   278 00000153 E8F5010000                call PAGINACION
+   279                                  
+   280 00000158 58                        pop eax
+   281 00000159 58                        pop eax
+   282 0000015A 58                        pop eax
+   283 0000015B 58                        pop eax
+   284 0000015C 58                        pop eax
+   285 0000015D 58                        pop eax
+   286                                  
+   287                                  
+   288 0000015E 68[00000000]              push  __DIR_FISICA_PAGE_TABLES_2
+   289 00000163 6A07                      push  ATRIBUTOS_DIRECTORIO
+   290 00000165 6A03                      push  ATRIBUTOS_TABLA_S_RW_P
+   291 00000167 68[00000000]              push  __SIZE_PILA_NUCLEO_TAREA_2 
+   292 0000016C 68[00000000]              push  __DIR_FISICA_PILA_NUCLEO_TAREA_2
+   293 00000171 68[00000000]              push  __INICIO_PILA_NUCLEO_TAREA_2
+   294                                  
+   295 00000176 E8D2010000                call PAGINACION
+   296 0000017B 58                        pop eax
+   297 0000017C 58                        pop eax
+   298 0000017D 58                        pop eax
+   299 0000017E 58                        pop eax
+   300 0000017F 58                        pop eax
+   301 00000180 58                        pop eax
+   302                                  
+   303                                  
+   304                                  
+   305 00000181 68[00000000]              push  __DIR_FISICA_PAGE_TABLES_2
+   306 00000186 6A07                      push  ATRIBUTOS_DIRECTORIO
+   307 00000188 6A07                      push  ATRIBUTOS_TABLA_US_RW_P
+   308 0000018A 68[00000000]              push  __SIZE_PILA_USUARIO_TAREA_2 
+   309 0000018F 68[00000000]              push  __DIR_FISICA_PILA_USUARIO_TAREA_2
+   310 00000194 68[00000000]              push  __INICIO_PILA_USUARIO_TAREA_2
+   311                                  
+   312 00000199 E8AF010000                call PAGINACION
+   313                                    
+   314 0000019E 58                        pop eax
+   315 0000019F 58                        pop eax
+   316 000001A0 58                        pop eax
+   317 000001A1 58                        pop eax
+   318 000001A2 58                        pop eax
+   319 000001A3 58                        pop eax
+   320                                    
+   321                                  
+   322 000001A4 68[00000000]              push  __DIR_FISICA_PAGE_TABLES_2
+   323 000001A9 6A07                      push  ATRIBUTOS_DIRECTORIO
+   324 000001AB 6A03                      push  ATRIBUTOS_TABLA_S_RW_P
+   325 000001AD 68[00000000]              push  __LONGITUD_TSS_TAREA_2 
+   326 000001B2 68[00000000]              push  __DIR_FISICA_TSS_TAREA_2
+   327 000001B7 68[00000000]              push  __INICIO_RAM_TSS_TAREA_2
+   328                                  
+   329 000001BC E88C010000                call PAGINACION
+   330                                    
+   331 000001C1 58                        pop eax
+   332 000001C2 58                        pop eax
+   333 000001C3 58                        pop eax
+   334 000001C4 58                        pop eax
+   335 000001C5 58                        pop eax
+   336 000001C6 58                        pop eax
+   337                                  
+   338                                  
+   339                                  
+   340                                  
+   341                                  
+   342                                  
+   343 000001C7 C3                        ret
+   344                                  
+   345                                  ;---------------------------------------------------------------------------------------------------------------------
+   346                                  ;---------------------------------------------------------------------------------------------------------------------
+   347                                  
+   348                                    PAGINACION_DIRECTORIO_N:     ; Paginacion de las paginas de kernel para el directorio correspondiente
+   349                                  
+   350 000001C8 89E5                      mov ebp, esp  
+   351                                  
+   352 000001CA 8B4504                    mov eax, [ebp + 4]           ; Cargo en eax la direccion del directorio a paginar que esta en la pila
+   353                                  
+   354 000001CD 50                        push  eax
+   355 000001CE 6A07                      push  ATRIBUTOS_DIRECTORIO
+   356 000001D0 6A03                      push  ATRIBUTOS_TABLA_S_RW_P
+   357 000001D2 68[00000000]              push  __LONGITUD_ISR
+   358 000001D7 68[00000000]              push  __DIR_FISICA_ISR
+   359 000001DC 68[00000000]              push  __INICIO_RAM_ISR
+   360                                    
+   361                                  
+   362 000001E1 E867010000                call PAGINACION
+   363                                  
+   364 000001E6 58                        pop eax
+   365 000001E7 58                        pop eax
+   366 000001E8 58                        pop eax
+   367 000001E9 58                        pop eax
+   368 000001EA 58                        pop eax
+   369 000001EB 58                        pop eax
+   370                                  
+   371                                  
+   372                                  
+   373 000001EC 89E5                      mov ebp, esp  
+   374 000001EE 8B4504                    mov eax, [ebp + 4]           ; Cargo en eax la direccion del directorio a paginar que esta en la pila
+   375                                    
+   376 000001F1 50                        push  eax
+   377 000001F2 6A07                      push  ATRIBUTOS_DIRECTORIO
+   378 000001F4 6A03                      push  ATRIBUTOS_TABLA_S_RW_P
+   379 000001F6 68[00000000]              push  __LONGITUD_SYS_TABLES
+   380 000001FB 68[00000000]              push  __DIR_FISICA_SYS_TABLES
+   381 00000200 68[00000000]              push  __INICIO_RAM_SYS_TABLES
+   382                                  
+   383 00000205 E843010000                call PAGINACION
+   384                                  
+   385 0000020A 58                        pop eax
+   386 0000020B 58                        pop eax
+   387 0000020C 58                        pop eax
+   388 0000020D 58                        pop eax
+   389 0000020E 58                        pop eax
+   390 0000020F 58                        pop eax
+   391                                  
+   392                                  
+   393                                  
+   394 00000210 89E5                      mov ebp, esp  
+   395 00000212 8B4504                    mov eax, [ebp + 4]            ; Cargo en eax la direccion del directorio a paginar que esta en la pila
+   396                                  
+   397 00000215 50                        push  eax
+   398 00000216 6A07                      push  ATRIBUTOS_DIRECTORIO
+   399 00000218 6A03                      push  ATRIBUTOS_TABLA_S_RW_P
+   400 0000021A 68[00000000]              push  __LONGITUD_NUCLEO
+   401 0000021F 68[00000000]              push  __DIR_FISICA_NUCLEO
+   402 00000224 68[00000000]              push  __INICIO_RAM_NUCLEO
+   403                                  
+   404 00000229 E81F010000                call PAGINACION
+   405                                  
+   406 0000022E 58                        pop eax
+   407 0000022F 58                        pop eax
+   408 00000230 58                        pop eax
+   409 00000231 58                        pop eax
+   410 00000232 58                        pop eax
+   411 00000233 58                        pop eax
+   412                                  
+   413                                  
+   414                                  
+   415 00000234 89E5                      mov ebp, esp  
+   416 00000236 8B4504                    mov eax, [ebp + 4]             ; Cargo en eax la direccion del directorio a paginar que esta en la pila
+   417                                  
+   418 00000239 50                        push  eax
+   419 0000023A 6A07                      push  ATRIBUTOS_DIRECTORIO
+   420 0000023C 6A03                      push  ATRIBUTOS_TABLA_S_RW_P
+   421 0000023E 68[00000000]              push  __LONGITUD_DATOS
+   422 00000243 68[00000000]              push  __DIR_FISICA_DATOS
+   423 00000248 68[00000000]              push  __INICIO_RAM_DATOS
+   424                                  
+   425 0000024D E8FB000000                call PAGINACION
+   426                                  
+   427 00000252 58                        pop eax
+   428 00000253 58                        pop eax
+   429 00000254 58                        pop eax
+   430 00000255 58                        pop eax
+   431 00000256 58                        pop eax
+   432 00000257 58                        pop eax
+   433                                  
+   434                                  
+   435                                  
+   436 00000258 89E5                      mov ebp, esp  
+   437 0000025A 8B4504                    mov eax, [ebp + 4]            ; Cargo en eax la direccion del directorio a paginar que esta en la pila
+   438                                  
+   439 0000025D 50                        push  eax
+   440 0000025E 6A07                      push  ATRIBUTOS_DIRECTORIO
+   441 00000260 6A03                      push  ATRIBUTOS_TABLA_S_RW_P
+   442 00000262 68[00000000]              push  __LONGITUD_BSS
+   443 00000267 68[00000000]              push  __DIR_FISICA_BSS
+   444 0000026C 68[00000000]              push  __INICIO_RAM_BSS
+   445                                  
+   446 00000271 E8D7000000                call PAGINACION
+   447                                  
+   448 00000276 58                        pop eax
+   449 00000277 58                        pop eax
+   450 00000278 58                        pop eax
+   451 00000279 58                        pop eax
+   452 0000027A 58                        pop eax
+   453 0000027B 58                        pop eax
+   454                                  
+   455                                  
+   456                                  
+   457 0000027C 89E5                      mov ebp, esp  
+   458 0000027E 8B4504                    mov eax, [ebp + 4]             ; Cargo en eax la direccion del directorio a paginar que esta en la pila
+   459                                  
+   460 00000281 50                        push  eax
+   461 00000282 6A07                      push  ATRIBUTOS_DIRECTORIO
+   462 00000284 6A03                      push  ATRIBUTOS_TABLA_S_RW_P
+   463 00000286 68[00000000]              push  __LONGITUD_RUTINAS
+   464 0000028B 68[00000000]              push  __DIR_FISICA_RUTINAS
+   465 00000290 68[00000000]              push  __INICIO_RAM_RUTINAS
+   466                                  
+   467 00000295 E8B3000000                call PAGINACION
+   468                                  
+   469 0000029A 58                        pop eax
+   470 0000029B 58                        pop eax
+   471 0000029C 58                        pop eax
+   472 0000029D 58                        pop eax
+   473 0000029E 58                        pop eax
+   474 0000029F 58                        pop eax
+   475                                  
+   476 000002A0 89E5                      mov ebp, esp  
+   477 000002A2 8B4504                    mov eax, [ebp + 4]              ; Cargo en eax la direccion del directorio a paginar que esta en la pila
+   478                                  
+   479 000002A5 50                        push  eax
+   480 000002A6 6A07                      push  ATRIBUTOS_DIRECTORIO
+   481 000002A8 6A03                      push  ATRIBUTOS_TABLA_S_RW_P
+   482 000002AA 68[00000000]              push  __LONGITUD_TABLA_DIGITOS
+   483 000002AF 68[00000000]              push  __DIR_FISICA_TABLA_DIGITOS
+   484 000002B4 68[00000000]              push  __INICIO_RAM_TABLA_DIGITOS
+   485                                  
+   486 000002B9 E88F000000                call PAGINACION
+   487                                  
+   488 000002BE 58                        pop eax
+   489 000002BF 58                        pop eax
+   490 000002C0 58                        pop eax
+   491 000002C1 58                        pop eax
+   492 000002C2 58                        pop eax
+   493 000002C3 58                        pop eax
+   494                                  
+   495 000002C4 89E5                      mov ebp, esp  
+   496 000002C6 8B4504                    mov eax, [ebp + 4]               ; Cargo en eax la direccion del directorio a paginar que esta en la pila
+   497                                  
+   498 000002C9 50                        push  eax
+   499 000002CA 6A07                      push  ATRIBUTOS_DIRECTORIO
+   500 000002CC 6A03                      push  ATRIBUTOS_TABLA_S_RW_P
+   501 000002CE 6800100000                push  0x1000
+   502 000002D3 68[00000000]              push  __DIR_FISICA_VIDEO
+   503 000002D8 68[00000000]              push  __DIR_LINEAL_VIDEO
+   504                                  
+   505 000002DD E86B000000                call PAGINACION
+   506                                  
+   507 000002E2 58                        pop eax
+   508 000002E3 58                        pop eax
+   509 000002E4 58                        pop eax
+   510 000002E5 58                        pop eax
+   511 000002E6 58                        pop eax
+   512 000002E7 58                        pop eax
+   513                                  
+   514 000002E8 89E5                      mov ebp, esp  
+   515 000002EA 8B4504                    mov eax, [ebp + 4]               ; Cargo en eax la direccion del directorio a paginar que esta en la pila
+   516                                  
+   517 000002ED 50                        push  eax
+   518 000002EE 6A07                      push  ATRIBUTOS_DIRECTORIO
+   519 000002F0 6A03                      push  ATRIBUTOS_TABLA_S_RW_P
+   520 000002F2 68[00000000]              push  __SIZE_PILA_NUCLEO 
+   521 000002F7 68[00000000]              push  __INICIO_PILA_NUCLEO
+   522 000002FC 68[00000000]              push  __INICIO_PILA_NUCLEO
+   523                                  
+   524 00000301 E847000000                call PAGINACION
+   525                                  
+   526 00000306 58                        pop eax
+   527 00000307 58                        pop eax
+   528 00000308 58                        pop eax
+   529 00000309 58                        pop eax
+   530 0000030A 58                        pop eax
+   531 0000030B 58                        pop eax
+   532                                  
+   533                                  
+   534 0000030C 89E5                      mov ebp, esp  
+   535 0000030E 8B4504                    mov eax, [ebp + 4]  
+   536                                  
+   537 00000311 50                        push  eax
+   538 00000312 6A07                      push  ATRIBUTOS_DIRECTORIO
+   539 00000314 6A03                      push  ATRIBUTOS_TABLA_S_RW_P
+   540 00000316 6800F00000                push  0xF000                   ; Dejo 15 tablas de paginacion por directorio paginadas
+   541 0000031B 50                        push  eax
+   542 0000031C 50                        push  eax
+   543                                  
+   544 0000031D E82B000000                call PAGINACION
+   545                                  
+   546 00000322 58                        pop eax
+   547 00000323 58                        pop eax
+   548 00000324 58                        pop eax
+   549 00000325 58                        pop eax
+   550 00000326 58                        pop eax
+   551 00000327 58                        pop eax
+   552                                  
+   553 00000328 89E5                      mov ebp, esp  
+   554 0000032A 8B4504                    mov eax, [ebp + 4]             ; Cargo en eax la direccion del directorio a paginar que esta en la pila
+   555                                  
+   556 0000032D 50                        push  eax
+   557 0000032E 6A07                      push  ATRIBUTOS_DIRECTORIO
+   558 00000330 6A03                      push  ATRIBUTOS_TABLA_S_RW_P
+   559 00000332 6800200000                push  0x2000
+   560 00000337 680000FFFF                push  0xFFFF0000
+   561 0000033C 680000FFFF                push  0xFFFF0000
+   562                                  
+   563 00000341 E807000000                call PAGINACION
+   564                                  
+   565 00000346 58                        pop eax
+   566 00000347 58                        pop eax
+   567 00000348 58                        pop eax
+   568 00000349 58                        pop eax
+   569 0000034A 58                        pop eax
+   570 0000034B 58                        pop eax
+   571                                  
+   572                                  
+   573                                  
+   574 0000034C C3                        ret 
+   575                                  
+   576                                  
+   577                                  ;////////////////////////////////////////////////////////////////////////////////////////////////////
+   578                                  ;/////////////////////////////////////////////////////////////////////////////////////////////////////
+   579                                  
+   580                                  
+   581                                  PAGINACION:
+   582                                  
+   583 0000034D 89E5                    mov ebp, esp  
+   584 0000034F 8B7504                  mov esi,[ebp + 4]  ; Cargo direccion lineal
+   585 00000352 8B7D08                  mov edi,[ebp + 8]  ; Cargo direccion fisica
+   586 00000355 8B5510                  mov edx,[ebp + 16]   
+   587 00000358 8B4D0C                  mov ecx,[ebp + 12] ; Cargo longitud de la seccion a paginar
+   588 0000035B 8B4518                  mov eax,[ebp + 24] ; Cargo direccion del DIRECTORIO
+   589                                  
+   590                                   
+   591                                  DIRECTORIO:   ;Puntero a tabla:  __INICIO_RAM_PAGE_TABLES + (contador+1) * 0x1000  + ATRIBUTOS_DIRECTORIO
+   592 0000035E C1EE16                  shr esi, 22
+   593 00000361 81E6FF030000            and esi, 0x3FF
+   594                                  
+   595                                  
+   596 00000367 8B1CB0                  mov ebx, dword [eax + esi * 4] ; Compruebo si ya existe un valor de tabla para el DIRECTORIO correspondiente
+   597 0000036A 83FB00                  cmp ebx, 0x0
+   598 0000036D 751D                    jnz TABLA                      ; Si existe, salto al cargado de entradas de la TABLA de paginas
+   599                                  ;xchg bx ,bx
+   600 0000036F A1[00000000]            mov eax,[_CONTADOR_TABLAS_PAGINAS]  ; Cargo el valor de la ultima TABLA usada
+   601 00000374 40                      inc eax                             ; Incremento una nueva TABLA
+   602 00000375 A3[00000000]            mov [_CONTADOR_TABLAS_PAGINAS] ,eax ; Guardo el valor incrementado en la pila nuevamente
+   603                                  
+   604 0000037A 89C3                    mov ebx, eax
+   605 0000037C 8B4518                  mov eax,[ebp + 24]        ; Cargo direccion del DIRECTORIO
+   606 0000037F C1E30C                  shl ebx, 12               ; Multiplico el contador por 0x1000 para apuntar a la TABLA
+   607 00000382 01C3                    add ebx, eax              ; Sumo el inicio del DIRECTORIO
+   608 00000384 8B5514                  mov edx,[ebp + 20]        ; Cargo ATRIBUTOS_DIRECTORIO
+   609 00000387 01D3                    add ebx, edx              ; Sumos los ATRIBUTOS_DIRECTORIO
+   610                                  
+   611 00000389 891CB0                  mov dword [eax + esi * 4], ebx ; Guardo el valor de TABLA, en la entrada de DIRECTORIO correspondiente
+   612                                  
+   613                                  
+   614                                  TABLA:
+   615                                  
+   616 0000038C 8B7504                  mov esi,[ebp + 4]        ; Cargo la direccion lineal nuevamente
+   617 0000038F C1EE0C                  shr esi, 12              ; Obtengo entrada de tabla de pagina
+   618 00000392 81E6FF030000            and esi, 0x3FF
+   619                                  
+   620 00000398 81E300F0FFFF            and ebx, 0xFFFFF000      ; Resto los ATRIBUTOS_DIRECTORIO para poder cargarle los de TABLA luego
+   621                                  
+   622                                  
+   623                                  
+   624 0000039E 8B5510                  mov edx,[ebp + 16]       ; Cargo ATRIBUTOS_TABLA         
+   625 000003A1 01D7                    add edi,edx              ; Sumo los atributos a la direccion lineal
+   626                                  
+   627 000003A3 C1E90C                  shr ecx, 12              ; Desplazo la cantidad de paginas para tener multiplo de 0x1000
+   628 000003A6 83F900                  cmp ecx, 0x0             ; Si cargue todas las paginas finalizo la paginacion de esta direccion
+   629 000003A9 7502                    jnz CASO_NORMAL
+   630 000003AB EB08                    jmp INICIO_TABLA
+   631                                  
+   632                                  CASO_NORMAL:
+   633 000003AD 49                      dec ecx                  ; Resto 0x1000 porque la direccion linea arranca en 0
+   634 000003AE 01CE                    add esi, ecx
+   635 000003B0 C1E10C                  shl ecx, 12              ; Multiplico por 0x1000 nuevamente
+   636 000003B3 01CF                    add edi,ecx              ; Sumo la ultima pagina a la direccion lineal a paginar
+   637                                  
+   638                                  
+   639                                  
+   640                                  INICIO_TABLA:    
+   641 000003B5 893CB3                  mov dword [ebx + esi *4], edi;
+   642 000003B8 83F900                  cmp ecx, 0x0             ; Si cargue todas las paginas finalizo la paginacion de esta direccion
+   643 000003BB 740F                    jz FIN
+   644 000003BD 81E900100000            sub ecx, 0x1000          ; Resto 0x1000 a la cantidad de paginas
+   645 000003C3 81EF00100000            sub edi, 0x1000          ; Resto 0x1000 a la direccion lineal para siguiente pagina
+   646 000003C9 4E                      dec esi
+   647 000003CA EBE9                    jmp INICIO_TABLA
+   648                                  
+   649                                  
+   650                                  FIN:
+   651 000003CC C3                      ret
+   652                                  

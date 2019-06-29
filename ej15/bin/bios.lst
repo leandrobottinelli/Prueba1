@@ -1,0 +1,414 @@
+     1                                  ;Pasos del programa:
+     2                                  ;---------------------------------------------------------------------------------------
+     3                                    ; Entro a modo_proteg
+     4                                    ; Copio la funcion copy en rutinas(RAM)
+     5                                    ; Llamo a la funcion copy para que me copie la ROM a nucleo (RAM)
+     6                                  
+     7                                    ; Ejecuto en RAM, donde cargo tablas de paginacion
+     8                                    ; Activo paginacion y copio todas las secciones de ROM a RAM
+     9                                  
+    10                                    ; Espero interrupcion de tecla, mientras tengo el flag desactivado
+    11                                    ; Espero interrupcion de timer, mientras tengo el flag desactivado
+    12                                  
+    13                                    ; Si el flag fue de timer:
+    14                                    ; Incremento el CONTADOR_TIMER cada vez que se activa el flag (10 ms)
+    15                                    ; Cuando llego a las 10 veces, Incremento _CONTADOR_TIMER_2  y muestro por pantalla el numero
+    16                                    ; Logro contar cuantas veces paso 100 ms
+    17                                  
+    18                                    ; Si el flag fue de teclado:
+    19                                    ; Cuando se produce la interrucion, la isr correspondiente activa el flag
+    20                                    ; LLamo a la funcion LECTURA_TECLA y obtengo el codigo de la tecla
+    21                                    ; En el main comparo cada caso, solo validando teclas con valores en hexa
+    22                                    ; Si la tecla es valida, la guardo en un vector 16 posiciones, al comienzo de la tabla.
+    23                                    ; Cuando se presiona la tecla enter, dejo de guardar teclas.
+    24                                    ; Si el numero de teclas es 16 o mas, las guardo desde la primera como la MSB hasta la ultima.
+    25                                    ; Si es menor a 16, hago lo mismo pero rellenando con ceros adelante.
+    26                                    ; Previo compruebo si es par o impar.
+    27                                    ; Voy guardando cada vector de teclas, ya acomodados uno debajo de otro en la tabla.
+    28                                  
+    29                                    ; NOTA: Las teclas las paso a traves de la pila 
+    30                                  ;-----------------------------------------------------------------------------------
+    31                                  
+    32                                  
+    33                                  EXTERN __INICIO_RAM_ISR
+    34                                  EXTERN __INICIO_ROM_ISR
+    35                                  EXTERN __INICIO_RAM_SYS_TABLES
+    36                                  EXTERN __INICIO_ROM_SYS_TABLES
+    37                                  EXTERN __INICIO_RAM_PAGE_TABLES
+    38                                  EXTERN __INICIO_ROM_PAGE_TABLES
+    39                                  EXTERN __INICIO_ROM_TABLA_DIGITOS 
+    40                                  EXTERN __INICIO_RAM_TABLA_DIGITOS 
+    41                                  EXTERN __INICIO_RAM_TEXT_TAREA_0
+    42                                  EXTERN __INICIO_ROM_TEXT_TAREA_0
+    43                                  EXTERN __INICIO_RAM_TEXT_TAREA_1
+    44                                  EXTERN __INICIO_ROM_TEXT_TAREA_1
+    45                                  EXTERN __INICIO_RAM_TEXT_TAREA_2
+    46                                  EXTERN __INICIO_ROM_TEXT_TAREA_2
+    47                                  EXTERN __INICIO_ROM_TSS_TAREA_0
+    48                                  EXTERN __INICIO_ROM_TSS_TAREA_1
+    49                                  EXTERN __INICIO_ROM_TSS_TAREA_2
+    50                                  
+    51                                  EXTERN __INICIO_RAM_NUCLEO
+    52                                  EXTERN __INICIO_ROM_NUCLEO
+    53                                  EXTERN __INICIO_ROM_DATOS 
+    54                                  EXTERN __INICIO_RAM_DATOS
+    55                                  EXTERN __INICIO_ROM_BSS 
+    56                                  EXTERN __INICIO_RAM_BSS
+    57                                  EXTERN __INICIO_RAM_RUTINAS
+    58                                  EXTERN __INICIO_ROM_RUTINAS
+    59                                  EXTERN __INICIO_ROM
+    60                                  
+    61                                  EXTERN __LONGITUD_ISR
+    62                                  EXTERN __LONGITUD_SYS_TABLES
+    63                                  EXTERN __LONGITUD_PAGE_TABLES
+    64                                  EXTERN __LONGITUD_RUTINAS
+    65                                  EXTERN __LONGITUD_NUCLEO
+    66                                  EXTERN __LONGITUD_DATOS
+    67                                  EXTERN __LONGITUD_BSS
+    68                                  EXTERN __LONGITUD_TEXT_TAREA_0
+    69                                  EXTERN __LONGITUD_TEXT_TAREA_1
+    70                                  EXTERN __LONGITUD_TEXT_TAREA_2
+    71                                  EXTERN __LONGITUD_TSS_TAREA_0
+    72                                  EXTERN __LONGITUD_TSS_TAREA_1
+    73                                  EXTERN __LONGITUD_TSS_TAREA_2
+    74                                  
+    75                                  EXTERN __INICIO_PILA_NUCLEO
+    76                                  EXTERN __FIN_PILA_NUCLEO
+    77                                  EXTERN __SIZE_PILA_NUCLEO
+    78                                  EXTERN __FIN_PILA_NUCLEO_TAREA_0
+    79                                  EXTERN __INICIO_PILA_NUCLEO_TAREA_0
+    80                                  
+    81                                  
+    82                                  
+    83                                  EXTERN __DIR_FISICA_ISR            
+    84                                  EXTERN __DIR_FISICA_VIDEO         
+    85                                  EXTERN __DIR_FISICA_SYS_TABLES    
+    86                                  EXTERN __DIR_FISICA_NUCLEO        
+    87                                  EXTERN __DIR_FISICA_TABLA_DIGITOS 
+    88                                  EXTERN __DIR_FISICA_TEXT_TAREA_0
+    89                                  EXTERN __DIR_FISICA_TEXT_TAREA_1  
+    90                                  EXTERN __DIR_FISICA_TEXT_TAREA_2  
+    91                                  EXTERN __DIR_FISICA_BSS_TAREA_1   
+    92                                  EXTERN __DIR_FISICA_DATA_TAREA_1  
+    93                                  EXTERN __DIR_FISICA_DATOS         
+    94                                  EXTERN __DIR_FISICA_RUTINAS       
+    95                                  EXTERN __DIR_FISICA_TSS_TAREA_0  
+    96                                  EXTERN __DIR_FISICA_TSS_TAREA_1  
+    97                                  EXTERN __DIR_FISICA_TSS_TAREA_2  
+    98                                  
+    99                                  
+   100                                  EXTERN __DIR_FISICA_PAGE_TABLES_0
+   101                                  EXTERN __DIR_FISICA_PAGE_TABLES_1
+   102                                  EXTERN __DIR_FISICA_PAGE_TABLES_2
+   103                                  ;----------------------------------------------------------------------------------
+   104                                  
+   105                                  GLOBAL _CONTADOR_TECLAS
+   106                                  GLOBAL _ENTRADA_TABLA
+   107                                  GLOBAL _CONTADOR_TECLAS_BYTES
+   108                                  GLOBAL _CONTADOR_TIMER
+   109                                  GLOBAL _BUFFER_NUMERO_PANTALLA
+   110                                  GLOBAL _FALLO_PAGINA_NUMERO
+   111                                  GLOBAL _CONTADOR_TABLAS_PAGINAS
+   112                                  GLOBAL _flag_int_timer
+   113                                  GLOBAL _CONTADOR_PAGINAS_NO_PRESENTES
+   114                                  GLOBAL _CONTADOR_TAREA_1
+   115                                  GLOBAL _CONTADOR_TAREA_2
+   116                                  GLOBAL _TAREA_ACTUAL
+   117                                  GLOBAL _TAREA_FUTURA
+   118                                  
+   119                                  
+   120                                  EXTERN COPY_INIT
+   121                                  EXTERN POLLING
+   122                                  
+   123                                  GLOBAL FIN
+   124                                  
+   125                                  GLOBAL cs_sel
+   126                                  GLOBAL ds_sel
+   127                                  
+   128                                  EXTERN img_idtr
+   129                                  EXTERN img_gdtr_32
+   130                                  EXTERN tss_32
+   131                                  EXTERN cs_sel_32_nucleo
+   132                                  EXTERN ds_sel_32_nucleo
+   133                                  
+   134                                  EXTERN LECTURA_TECLA
+   135                                  EXTERN CARGAR_TABLA
+   136                                  EXTERN CARGAR_TABLA_2
+   137                                  EXTERN TAREA_0
+   138                                  EXTERN TAREA_1
+   139                                  EXTERN TAREA_2
+   140                                  GLOBAL _NUMERO_TOTAL
+   141                                  
+   142                                  GLOBAL _flag_int_teclado
+   143                                  GLOBAL _flag_16_TECLAS
+   144                                  
+   145                                  
+   146                                  EXTERN _pic_configure
+   147                                  EXTERN _pit_configure
+   148                                  EXTERN pantalla_init
+   149                                  
+   150                                  EXTERN MOSTRAR_PANTALLA
+   151                                  EXTERN BUFFER_DOBLE_OFFS
+   152                                  EXTERN PAGINACION_INIT
+   153                                  ;----------------------------------------------------------------------------------
+   154                                  
+   155                                  %define BKP xchg bx,bx
+   156                                  
+   157                                  ;----------------------------------------------------------------------------------
+   158                                  
+   159                                  section .reset
+   160                                  arranque:
+   161                                  USE16
+   162 00000000 B80000                  mov ax,0
+   163 00000003 FFE0                    jmp ax
+   164                                  ;salto a inicio16
+   165 00000005 00<rept>                times 16-($-arranque) db 0
+   166                                  
+   167                                  section .init
+   168                                  
+   169 00000000 EB1E                    jmp inicio
+   170                                  
+   171                                  gdt:
+   172 00000002 0000000000000000                  db 0,0,0,0,0,0,0,0  ;Descriptor nulo
+   173                                  ds_sel    equ $-gdt
+   174 0000000A FFFF00000092CF00                  db 0xFF, 0xFF, 0, 0, 0, 0x92, 0xCF, 0
+   175                                  cs_sel    equ $-gdt
+   176 00000012 FFFF0000009ACF00                  db 0xFF, 0xFF, 0, 0, 0, 0x9A, 0xCF, 0
+   177                                  
+   178                                  long_gdt equ $-gdt
+   179                                  
+   180                                  
+   181                                  img_gdtr:
+   182 0000001A 1700                        dw long_gdt-1
+   183 0000001C [02000000]                  dd gdt
+   184                                  
+   185                                  
+   186                                  
+   187                                  inicio:
+   188 00000020 FA                        cli                ;Deshabilito interrupciones
+   189 00000021 E8(0000)                  call pantalla_init
+   190                                  
+   191 00000024 66                        db 0x66            ;Requerido para direcciones mayores
+   192 00000025 2E0F0116[1A00]            lgdt [cs:img_gdtr] ;que 0x00FFFFFFF. 
+   193 0000002B 0F20C0                    mov eax,cr0        ;Habiltación bit de modo protegido. 
+   194 0000002E 6683C801                  or eax,1
+   195 00000032 0F22C0                    mov cr0,eax
+   196                                    
+   197                                   	
+   198 00000035 66EA[3F000000]1000       jmp dword cs_sel:modo_proteg
+   199 0000003D 87DB                    BKP
+   200                                  
+   201                                   
+   202                                  USE32
+   203                                  modo_proteg:
+   204                                  
+   205                                  
+   206 0000003F 66B80800                  mov ax,ds_sel
+   207 00000043 8ED8                      mov ds,ax
+   208 00000045 8ED0                      mov ss,ax
+   209 00000047 8EC0                      mov es,ax
+   210 00000049 BC[FFFFFFFF]              mov esp,__FIN_PILA_NUCLEO -1
+   211 0000004E BD[00000000]              mov ebp,__INICIO_PILA_NUCLEO 
+   212                                  
+   213                                  
+   214                                  
+   215                                  ;--------------------------------------------------------------------------------------------------------------------
+   216                                  
+   217                                  
+   218 00000053 68[00000000]              push __INICIO_ROM_RUTINAS
+   219 00000058 68[00000000]              push __DIR_FISICA_RUTINAS
+   220 0000005D 68[00000000]              push __LONGITUD_RUTINAS
+   221                                    
+   222 00000062 E8(00000000)              call __INICIO_ROM_RUTINAS ;Copio la funcion copy en RAM a mano
+   223                                  
+   224 00000067 58                        pop eax
+   225 00000068 58                        pop eax
+   226 00000069 58                        pop eax
+   227                                  
+   228                                  
+   229                                  
+   230 0000006A 68[00000000]              push __INICIO_ROM_NUCLEO
+   231 0000006F 68[00000000]              push __DIR_FISICA_NUCLEO
+   232 00000074 68[00000000]              push __LONGITUD_NUCLEO
+   233                                  
+   234                                  
+   235 00000079 E8(00000000)              call COPY_INIT            ;Copio parte de la ROM en RAM desde
+   236 0000007E 58                        pop eax                   ;funcion copy en RAM
+   237 0000007F 58                        pop eax
+   238 00000080 58                        pop eax
+   239                                  
+   240                                  
+   241 00000081 E9(00000000)              jmp nucleos
+   242                                   
+   243                                   ;------------------------------------------------------------------------------------------------------------
+   244                                  
+   245                                  section .nucleo
+   246                                  
+   247                                  
+   248                                  nucleos:   
+   249                                  
+   250                                  
+   251 00000000 E8(00000000)              call PAGINACION_INIT                  ; Cargo el DIRECTORIO y TABLAS de paginacion  
+   252                                  
+   253                                  
+   254                                  
+   255 00000005 68[00000000]              push __INICIO_ROM_ISR
+   256 0000000A 68[00000000]              push __DIR_FISICA_ISR
+   257 0000000F 68[00000000]              push __LONGITUD_ISR 
+   258                                  
+   259 00000014 E8(00000000)              call COPY_INIT
+   260                                    
+   261 00000019 58                        pop eax
+   262 0000001A 58                        pop eax
+   263 0000001B 58                        pop eax
+   264                                  
+   265                                  
+   266                                  
+   267 0000001C 68[00000000]              push __INICIO_ROM_SYS_TABLES
+   268 00000021 68[00000000]              push __DIR_FISICA_SYS_TABLES
+   269 00000026 68[00000000]              push __LONGITUD_SYS_TABLES
+   270                                  
+   271 0000002B E8(00000000)              call COPY_INIT                        ; Copio la GDT e IDT a sys_tables(RAM)
+   272                                      
+   273 00000030 58                        pop eax
+   274 00000031 58                        pop eax
+   275 00000032 58                        pop eax
+   276                                  
+   277                                  
+   278                                  
+   279 00000033 68[00000000]              push __INICIO_ROM_DATOS
+   280 00000038 68[00000000]              push __DIR_FISICA_DATOS
+   281 0000003D 68[00000000]              push __LONGITUD_DATOS
+   282                                  
+   283 00000042 E8(00000000)              call COPY_INIT                        ; Copio seccion de datos. Contador de la tabla de digitos
+   284                                    
+   285 00000047 58                        pop eax
+   286 00000048 58                        pop eax
+   287 00000049 58                        pop eax
+   288                                  
+   289                                  
+   290                                    
+   291 0000004A 68[00000000]              push __INICIO_ROM_TEXT_TAREA_0
+   292 0000004F 68[00000000]              push __DIR_FISICA_TEXT_TAREA_0
+   293 00000054 68[00000000]              push __LONGITUD_TEXT_TAREA_0
+   294                                  
+   295 00000059 E8(00000000)              call COPY_INIT                        ; Copio la tarea_1 a (RAM)
+   296                                      
+   297 0000005E 58                        pop eax
+   298 0000005F 58                        pop eax
+   299 00000060 58                        pop eax
+   300                                  
+   301                                  
+   302 00000061 68[00000000]              push __INICIO_ROM_TEXT_TAREA_1
+   303 00000066 68[00000000]              push __DIR_FISICA_TEXT_TAREA_1
+   304 0000006B 68[00000000]              push __LONGITUD_TEXT_TAREA_1
+   305                                  
+   306 00000070 E8(00000000)              call COPY_INIT                        ; Copio la tarea_1 a (RAM)
+   307                                      
+   308 00000075 58                        pop eax
+   309 00000076 58                        pop eax
+   310 00000077 58                        pop eax
+   311                                  
+   312                                  
+   313 00000078 68[00000000]              push __INICIO_ROM_TEXT_TAREA_2
+   314 0000007D 68[00000000]              push __DIR_FISICA_TEXT_TAREA_2
+   315 00000082 68[00000000]              push __LONGITUD_TEXT_TAREA_2
+   316                                  
+   317 00000087 E8(00000000)              call COPY_INIT                        ; Copio la tarea_1 a (RAM)
+   318                                      
+   319 0000008C 58                        pop eax
+   320 0000008D 58                        pop eax
+   321 0000008E 58                        pop eax
+   322                                  
+   323                                  
+   324 0000008F 68[00000000]              push  __INICIO_ROM_TSS_TAREA_0
+   325 00000094 68[00000000]              push __DIR_FISICA_TSS_TAREA_0
+   326 00000099 68[00000000]              push __LONGITUD_TSS_TAREA_0
+   327                                  
+   328 0000009E E8(00000000)              call COPY_INIT                        ; Copio la tarea_1 a (RAM)
+   329                                      
+   330 000000A3 58                        pop eax
+   331 000000A4 58                        pop eax
+   332 000000A5 58                        pop eax
+   333                                  
+   334                                  
+   335 000000A6 68[00000000]              push  __INICIO_ROM_TSS_TAREA_1
+   336 000000AB 68[00000000]              push __DIR_FISICA_TSS_TAREA_1
+   337 000000B0 68[00000000]              push __LONGITUD_TSS_TAREA_1
+   338                                  
+   339 000000B5 E8(00000000)              call COPY_INIT                       ; Copio la tarea_1 a (RAM)
+   340                                      
+   341 000000BA 58                        pop eax
+   342 000000BB 58                        pop eax
+   343 000000BC 58                        pop eax
+   344                                  
+   345                                  
+   346                                  
+   347 000000BD 68[00000000]              push __INICIO_ROM_TSS_TAREA_2
+   348 000000C2 68[00000000]              push __DIR_FISICA_TSS_TAREA_2
+   349 000000C7 68[00000000]              push __LONGITUD_TSS_TAREA_2
+   350                                  
+   351 000000CC E8(00000000)              call COPY_INIT                      ; Copio la tarea_1 a (RAM)
+   352                                      
+   353 000000D1 58                        pop eax
+   354 000000D2 58                        pop eax
+   355 000000D3 58                        pop eax
+   356                                  
+   357 000000D4 6687DB                  BKP
+   358                                  
+   359                                  
+   360 000000D7 2E0F0115[00000000]      lgdt [cs:img_gdtr_32] 
+   361                                  
+   362 000000DF 0F011D[00000000]        lidt [img_idtr]
+   363                                  
+   364 000000E6 66B8[0000]              mov ax, tss_32   
+   365 000000EA 0F00D8                  ltr ax
+   366                                  
+   367 000000ED E8(00000000)            call _pic_configure
+   368 000000F2 E8(00000000)            call _pit_configure
+   369                                  
+   370 000000F7 BC[00000000]            mov esp, __FIN_PILA_NUCLEO_TAREA_0 
+   371 000000FC BD[00000000]            mov ebp, __INICIO_PILA_NUCLEO_TAREA_0
+   372                                  
+   373 00000101 6687DB                  BKP
+   374 00000104 B8[00000000]            mov eax, __DIR_FISICA_PAGE_TABLES_0   ; La tarea inicial va arrancar en el DIRECTORIO 0
+   375 00000109 0F22D8                  mov cr3,eax                           ; Apuntar a directorio de paginas.
+   376 0000010C 0F20C0                  mov eax,cr0                           ; Activar paginacion encendiendo el
+   377 0000010F 0D00000080              or eax,0x80000000                     ; bit 31 de CR0.
+   378 00000114 0F22C0                  mov cr0,eax
+   379                                  
+   380 00000117 FB                      sti
+   381 00000118 E9(00000000)            jmp TAREA_0
+   382                                  
+   383                                  
+   384                                  
+   385                                  
+   386                                  
+   387                                  ;///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+   388                                  ;///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+   389                                  
+   390                                  section .datos 
+   391 00000000 [1000000000000000]      _ENTRADA_TABLA: dq __INICIO_RAM_TABLA_DIGITOS + 0x10 ; Puntero a la primera entrada de tabla libre
+   391          ******************       warning: 64-bit unsigned relocation zero-extended from 32 bits
+ [-w+zext-reloc]
+   392 00000008 0500000000000000        _CONTADOR_TAREA_2: dq 0x05
+   393                                  
+   394                                  
+   395                                  section .bss nobits
+   396                                  
+   397 00000000 <res 00000008>          _CONTADOR_TECLAS: resq 1         ; Contador de teclas validas presionadas
+   398 00000008 <res 00000008>          _CONTADOR_TECLAS_BYTES: resq 1   ; Contador para tomar de a dos hexas, y ponerlos en un byte
+   399 00000010 <res 00000008>          _flag_int_teclado: resq 1        ; Flag si interrumpio el teclado
+   400 00000018 <res 00000008>          _flag_16_TECLAS: resq 1          ; Flag si se presionaron mas de 16 teclas
+   401 00000020 <res 00000008>          _flag_int_timer: resq 1		     ; Flag si interrumpio el timer
+   402 00000028 <res 00000008>          _CONTADOR_TIMER: resq 1          ; Contador de interrupciones del PIT cada 10ms
+   403 00000030 <res 00000008>          _CONTADOR_TIMER_2: resq 1        ; Contador de interrupciones del PIT cada 100ms
+   404 00000038 <res 00000010>          _NUMERO_TOTAL : resq 2           ; Suma total de los numeros cargados en la TABLA_DIGITOS
+   405 00000048 <res 00000008>          _FALLO_PAGINA_NUMERO: resq 1     ; Direccion de la pagina que falla CR2
+   406 00000050 <res 00000008>          _CONTADOR_PAGINAS_NO_PRESENTES: resq 1 ; Contador de paginas no presentes que ya fueron paginadas
+   407 00000058 <res 00000008>          _CONTADOR_TAREA_1: resq 1
+   408 00000060 <res 00000008>          _TAREA_ACTUAL: resq 1
+   409 00000068 <res 00000008>          _TAREA_FUTURA: resq 1
+   410 00000070 <res 00000008>          _CONTADOR_TABLAS_PAGINAS: resq 1 ; Contardor de cantidad de tablas de paginas ya creadas
+   411 00000078 <res 00000008>          _BUFFER_NUMERO_PANTALLA: resq 1  ; Numero en ascii a cargar en la seccion de VIDEO
+   412                                  

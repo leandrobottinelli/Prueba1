@@ -1,0 +1,592 @@
+     1                                  GLOBAL isr0_handler_DE
+     2                                  GLOBAL isr2_handler_NMI
+     3                                  GLOBAL isr3_handler_BP
+     4                                  GLOBAL isr4_handler_OF
+     5                                  GLOBAL isr5_handler_BR
+     6                                  GLOBAL isr6_handler_UD
+     7                                  GLOBAL isr7_handler_NM
+     8                                  GLOBAL isr8_handler_DF
+     9                                  GLOBAL isr9_handler
+    10                                  GLOBAL isr10_handler_TS
+    11                                  GLOBAL isr11_handler_NP
+    12                                  GLOBAL isr12_handler_SS
+    13                                  GLOBAL isr13_handler_GP
+    14                                  GLOBAL isr14_handler_PF
+    15                                  GLOBAL isr15_handler
+    16                                  GLOBAL isr16_handler_MF
+    17                                  GLOBAL isr17_handler_AC
+    18                                  GLOBAL isr18_handler_MC
+    19                                  GLOBAL isr19_handler_XF
+    20                                  GLOBAL isr32_handler_PIT
+    21                                  GLOBAL isr33_handler_KEYBOARD
+    22                                  GLOBAL isr80_handler_SYS_CALL
+    23                                  
+    24                                  EXTERN __DIR_FISICA_PAGE_TABLES_0
+    25                                  EXTERN __DIR_FISICA_PAGE_TABLES_1
+    26                                  EXTERN __DIR_FISICA_PAGE_TABLES_2
+    27                                  
+    28                                  
+    29                                  
+    30                                  EXTERN _TSS_0_eax
+    31                                  EXTERN _TSS_0_ebx
+    32                                  EXTERN _TSS_0_ecx
+    33                                  EXTERN _TSS_0_edx
+    34                                  EXTERN _TSS_0_edi
+    35                                  EXTERN _TSS_0_esi
+    36                                  EXTERN _TSS_0_ebp
+    37                                  EXTERN _TSS_0_esp
+    38                                  EXTERN _TSS_0_eip
+    39                                  EXTERN _TSS_0_eflags
+    40                                  EXTERN _TSS_0_cs
+    41                                  EXTERN _TSS_0_ds
+    42                                  EXTERN _TSS_0_es
+    43                                  EXTERN _TSS_0_ss
+    44                                  
+    45                                  GLOBAL LECTURA_TECLA
+    46                                  EXTERN __INICIO_RAM_TECLADO_RUTINA
+    47                                  EXTERN MOSTRAR_PANTALLA
+    48                                  EXTERN _FALLO_PAGINA_NUMERO
+    49                                  EXTERN __INICIO_RAM_PAGE_TABLES
+    50                                  EXTERN PAGINACION
+    51                                  EXTERN _CONTADOR_PAGINAS_NO_PRESENTES
+    52                                  EXTERN __DIR_FISICA_PAGINAS_NO_PRESENTES
+    53                                  EXTERN _CONTADOR_TAREA_1
+    54                                  EXTERN _CONTADOR_TAREA_2
+    55                                  EXTERN _CONTADOR_TECLAS
+    56                                  EXTERN _NUMERO_TOTAL
+    57                                  EXTERN _flag_16_TECLAS
+    58                                  EXTERN TAREA_0
+    59                                  EXTERN _TAREA_ACTUAL
+    60                                  EXTERN _TAREA_FUTURA
+    61                                  EXTERN cs_sel_32_usuario
+    62                                  
+    63                                  ;-------------------------------------------------------------------------------
+    64                                  %define _PUERTO_TECLADO  0x64;
+    65                                  %define _PUERTO_TECLADO_CODIGO 0x60;
+    66                                  
+    67                                  ;-------------------------------------------------------------------------------
+    68                                  EXTERN CARGAR_TABLA
+    69                                  EXTERN CARGAR_TABLA_2
+    70                                  
+    71                                  GLOBAL _flag_int_teclado
+    72                                  GLOBAL _flag_16_TECLAS
+    73                                  EXTERN BUFFER_DOBLE_OFFS
+    74                                  
+    75                                  %define TECLA_0  0x0B
+    76                                  %define TECLA_1  0x02
+    77                                  %define TECLA_2  0x03
+    78                                  %define TECLA_3  0x04
+    79                                  %define TECLA_4  0x05
+    80                                  %define TECLA_5  0x06
+    81                                  %define TECLA_6  0x07
+    82                                  %define TECLA_7  0x08
+    83                                  %define TECLA_8  0x09
+    84                                  %define TECLA_9  0x0A
+    85                                  %define TECLA_A  0x1E
+    86                                  %define TECLA_B  0x30
+    87                                  %define TECLA_C  0x2E
+    88                                  %define TECLA_D  0x20
+    89                                  %define TECLA_E  0x12
+    90                                  %define TECLA_F  0x21
+    91                                  %define TECLA_ENTER  0x1C
+    92                                  
+    93                                  
+    94                                  %define BKP xchg bx,bx
+    95                                  %define _TIEMPO_TAREA_1 5
+    96                                  %define _TIEMPO_TAREA_2 10
+    97                                  %define _OFFSET_TAREAS  3
+    98                                  
+    99                                  %define buffer 1
+   100                                  %define num_bytes 1
+   101                                  ;-------------------------------------------------------------------------------
+   102                                  
+   103                                  section .rutina_lectura_teclado
+   104                                  USE32
+   105                                  
+   106                                  POLLING:
+   107                                  
+   108 00000000 E464                    in al, _PUERTO_TECLADO 
+   109 00000002 0FBAE000                bt eax, 0x00
+   110 00000006 73F8                    jnc POLLING
+   111                                  
+   112                                  LECTURA_TECLA:
+   113                                  
+   114 00000008 E460                    in al, _PUERTO_TECLADO_CODIGO
+   115 0000000A 660FBAE007              bt ax, 0x7                             ; Me fijo si la tecla fue presionada o soltada
+   116                                  ;jc POLLING                             ; Me quedo solo con la tecla persionada
+   117                                  
+   118 0000000F C3                      ret
+   119                                  
+   120                                  
+   121                                  
+   122                                  ;///////////////////////////////////////////////////////////////////////////////////////////////////////////////////;//////////////////////////////////////////////////////////////////////////////////////////////////
+   123                                  ;///////////////////////////////////////////////////////////////////////////////////////////////////////////////////;//////////////////////////////////////////////////////////////////////////////////////////////////
+   124                                  ;///////////////////////////////////////////////////////////////////////////////////////////////////////////////////;//////////////////////////////////////////////////////////////////////////////////////////////////
+   125                                  
+   126                                  section .rutinas_isr
+   127                                  USE32
+   128                                  
+   129                                  default_isr:
+   130 00000000 90                         nop
+   131 00000001 6687DB                     xchg bx,bx
+   132 00000004 90                         nop
+   133 00000005 F4                         hlt
+   134                                  
+   135                                  
+   136                                  isr0_handler_DE:
+   137 00000006 BA00000000                 mov edx, 0
+   138 0000000B EBF3                       jmp default_isr
+   139                                  
+   140                                  
+   141                                  isr2_handler_NMI:
+   142 0000000D BA02000000                 mov edx, 2
+   143 00000012 EBEC                       jmp default_isr
+   144                                  
+   145                                  
+   146                                  isr3_handler_BP:
+   147 00000014 BA03000000                 mov edx, 3
+   148 00000019 EBE5                       jmp default_isr
+   149                                  
+   150                                  
+   151                                  isr4_handler_OF:
+   152 0000001B BA04000000                 mov edx, 4
+   153 00000020 EBDE                       jmp default_isr
+   154                                  
+   155                                  
+   156                                  isr5_handler_BR:
+   157 00000022 BA05000000                 mov edx, 5
+   158 00000027 EBD7                       jmp default_isr
+   159                                  
+   160                                  
+   161                                  isr6_handler_UD:
+   162 00000029 BA06000000                 mov edx, 6
+   163 0000002E EBD0                       jmp default_isr
+   164                                  
+   165                                  
+   166                                  isr7_handler_NM:
+   167 00000030 BA07000000                 mov edx, 7
+   168 00000035 EBC9                       jmp default_isr
+   169                                  
+   170                                  
+   171                                  isr8_handler_DF:
+   172 00000037 BA08000000                 mov edx, 8
+   173 0000003C EBC2                       jmp default_isr
+   174                                  
+   175                                  isr9_handler:
+   176 0000003E BA09000000                 mov edx, 9
+   177 00000043 EBBB                       jmp default_isr
+   178                                  
+   179                                  
+   180                                  isr10_handler_TS:
+   181 00000045 BA0A000000                 mov edx, 10
+   182 0000004A EBB4                       jmp default_isr
+   183                                  
+   184                                  
+   185                                  isr11_handler_NP:
+   186 0000004C BA0B000000                 mov edx, 11
+   187 00000051 EBAD                       jmp default_isr
+   188                                  
+   189                                  
+   190                                  isr12_handler_SS:
+   191 00000053 BA0C000000                 mov edx, 12
+   192 00000058 EBA6                       jmp default_isr
+   193                                  
+   194                                  
+   195                                  isr13_handler_GP:
+   196 0000005A BA0D000000                 mov edx, 13
+   197 0000005F EB9F                       jmp default_isr
+   198                                  
+   199                                  
+   200                                  isr14_handler_PF:
+   201 00000061 BA0E000000                 mov edx, 14
+   202 00000066 6687DB                     xchg bx,bx
+   203 00000069 EB95                       jmp default_isr
+   204                                  
+   205                                  
+   206                                  isr15_handler:
+   207 0000006B BA0F000000                 mov edx, 15
+   208 00000070 EB8E                       jmp default_isr
+   209                                  
+   210                                  isr16_handler_MF:
+   211 00000072 BA10000000                 mov edx, 16
+   212 00000077 EB87                       jmp default_isr
+   213                                  
+   214                                  
+   215                                  isr17_handler_AC:
+   216 00000079 BA11000000                 mov edx, 17
+   217 0000007E EB80                       jmp default_isr
+   218                                  
+   219                                  
+   220                                  isr18_handler_MC:
+   221 00000080 BA12000000                 mov edx, 18
+   222 00000085 E976FFFFFF                 jmp default_isr
+   223                                  
+   224                                  
+   225                                  isr19_handler_XF:
+   226 0000008A BA13000000                 mov edx, 19
+   227 0000008F E96CFFFFFF                 jmp default_isr
+   228                                  
+   229                                  
+   230                                  
+   231                                  isr32_handler_PIT:
+   232                                     ;xchg bx, bx
+   233                                  
+   234 00000094 50                        push eax
+   235 00000095 B020                      mov al,0x20                          ; Codigo para avisar al PIC que atendi la int 
+   236 00000097 E620                      out 0x20,al
+   237 00000099 0F20D8                    mov eax, cr3
+   238 0000009C A3[00000000]              mov [_TAREA_ACTUAL], eax
+   239                                     
+   240                                  
+   241 000000A1 6A20                       push 0x20                           ; Guardo el valor de COLUMNAS  
+   242 000000A3 6800050000                 push 0x500                          ; Guardo el valor de FILAS
+   243 000000A8 68[00000000]               push _NUMERO_TOTAL
+   244 000000AD E8(00000000)               call MOSTRAR_PANTALLA               ; Muestro en pantalla el numero cada 10 veces que vence 10ms(base de tiempo)
+   245 000000B2 58                         pop eax
+   246 000000B3 58                         pop eax
+   247 000000B4 58                         pop eax
+   248                                     
+   249                                  
+   250                                  
+   251                                  
+   252                                  
+   253                                    ;xchg bx, bx
+   254 000000B5 FE05[00000000]            inc BYTE[_CONTADOR_TAREA_1]
+   255 000000BB FE05[00000000]            inc BYTE[_CONTADOR_TAREA_2]
+   256                                  
+   257                                    ;BKP
+   258 000000C1 803D[00000000]05          cmp BYTE[_CONTADOR_TAREA_1], _TIEMPO_TAREA_1
+   259 000000C8 C705[00000000]-           mov dword[_TAREA_FUTURA], __DIR_FISICA_PAGE_TABLES_1
+   259 000000CE [00000000]         
+   260 000000D2 741F                      je VALIDACION_CAMBIO_TAREA
+   261                                  
+   262 000000D4 803D[00000000]0A          cmp BYTE[_CONTADOR_TAREA_2], _TIEMPO_TAREA_2
+   263 000000DB C705[00000000]-           mov dword[_TAREA_FUTURA], __DIR_FISICA_PAGE_TABLES_2
+   263 000000E1 [00000000]         
+   264 000000E5 740C                      je VALIDACION_CAMBIO_TAREA
+   265                                    
+   266                                  
+   267 000000E7 C705[00000000]-           mov dword[_TAREA_FUTURA], __DIR_FISICA_PAGE_TABLES_0
+   267 000000ED [00000000]         
+   268 000000F1 7400                      je VALIDACION_CAMBIO_TAREA
+   269                                  
+   270                                    VALIDACION_CAMBIO_TAREA:
+   271 000000F3 A1[00000000]              mov eax, [_TAREA_FUTURA] 
+   272 000000F8 3905[00000000]            cmp dword[_TAREA_ACTUAL], eax
+   273 000000FE 58                        pop eax
+   274 000000FF 0F8452010000              je FIN2
+   275 00000105 EB00                      jmp GUARDAR
+   276                                  
+   277                                  
+   278                                  
+   279                                    GUARDAR:
+   280                                  
+   281                                  
+   282 00000107 A3[00000000]               mov dword [_TSS_0_eax], eax 
+   283 0000010C 891D[00000000]             mov dword [_TSS_0_ebx], ebx
+   284 00000112 890D[00000000]             mov dword [_TSS_0_ecx], ecx
+   285 00000118 8915[00000000]             mov dword [_TSS_0_edx], edx
+   286 0000011E 8935[00000000]             mov dword [_TSS_0_esi], esi
+   287 00000124 893D[00000000]             mov dword [_TSS_0_edi], edi
+   288                                  
+   289                                  
+   290 0000012A 58                         pop eax
+   291 0000012B A3[00000000]               mov dword [_TSS_0_eip], eax              ; Guardo EIP de la tarea actual
+   292 00000130 58                         pop eax
+   293 00000131 66A3[00000000]             mov word [_TSS_0_cs], ax                 ; Guardo CS de la tarea actual
+   294 00000137 58                         pop eax
+   295 00000138 A3[00000000]               mov dword [_TSS_0_eflags], eax           ; Guardo EFLAGS de la tarea actua
+   296 0000013D 8CD8                       mov eax, ds
+   297 0000013F 66A3[00000000]             mov word [_TSS_0_ds], ax
+   298                                  
+   299 00000145 8CC0                       mov eax, es
+   300 00000147 66A3[00000000]             mov word [_TSS_0_es], ax
+   301                                  
+   302 0000014D 892D[00000000]             mov dword [_TSS_0_ebp], ebp
+   303                                  
+   304                                  
+   305                                     CONSULTAR_GUARDADO_TAREA_USUARIO:
+   306                                  
+   307 00000153 803D[00000000][00]         cmp byte[_TSS_0_cs], cs_sel_32_usuario
+   308 0000015A 7408                       je GUARDADO_PILA
+   309                                  
+   310                                     GUARDADO_REGISTROS:
+   311 0000015C 8925[00000000]             mov dword [_TSS_0_esp], esp
+   312                                     ;mov eax, ss
+   313                                     ;mov word [_TSS_0_es], ax
+   314 00000162 EB0C                       jmp CAMBIO_TAREA_0
+   315                                  
+   316                                     GUARDADO_PILA:
+   317 00000164 58                         pop eax
+   318 00000165 A3[00000000]               mov dword [_TSS_0_esp], eax
+   319 0000016A 58                         pop eax
+   320 0000016B A3[00000000]               mov dword [_TSS_0_ss], eax
+   321                                  
+   322                                  
+   323                                  
+   324                                  
+   325                                  
+   326                                  
+   327                                  
+   328                                  
+   329                                     CAMBIO_TAREA_0:
+   330                                     ;xchg bx, bx
+   331 00000170 813D[00000000]-            cmp dword[_TAREA_FUTURA], __DIR_FISICA_PAGE_TABLES_0
+   331 00000176 [00000000]         
+   332 0000017A 7515                       jne CAMBIO_TAREA_1
+   333 0000017C A1[00000000]               mov eax, [_TAREA_FUTURA]
+   334 00000181 A3[00000000]               mov dword[_TAREA_ACTUAL], eax
+   335 00000186 0F22D8                     mov cr3, eax
+   336 00000189 EB56                       jmp CONSULTAR_CARGADO_TAREA_USUARIO
+   337 0000018B 0F84C6000000               je FIN2
+   338                                  
+   339                                  
+   340                                     CAMBIO_TAREA_1:
+   341                                     ;xchg bx, bx
+   342 00000191 813D[00000000]-            cmp dword[_TAREA_FUTURA], __DIR_FISICA_PAGE_TABLES_1
+   342 00000197 [00000000]         
+   343 0000019B 751C                       jne CAMBIO_TAREA_2
+   344 0000019D A1[00000000]               mov eax, [_TAREA_FUTURA]
+   345 000001A2 A3[00000000]               mov dword[_TAREA_ACTUAL], eax
+   346 000001A7 0F22D8                     mov cr3, eax
+   347 000001AA C605[00000000]00           mov BYTE[_CONTADOR_TAREA_1], 0x00
+   348                                  
+   349 000001B1 EB2E                       jmp CONSULTAR_CARGADO_TAREA_USUARIO
+   350 000001B3 0F849E000000               je FIN2
+   351                                  
+   352                                  
+   353                                     CAMBIO_TAREA_2:
+   354                                     ;xchg bx, bx
+   355 000001B9 813D[00000000]-            cmp dword[_TAREA_FUTURA], __DIR_FISICA_PAGE_TABLES_2 ; Esta comparacion no haria falta, si llega aca
+   355 000001BF [00000000]         
+   356 000001C3 0F858E000000               jne FIN2                                             ; es porque es la tarea 2
+   357 000001C9 A1[00000000]               mov eax, [_TAREA_FUTURA]
+   358 000001CE A3[00000000]               mov dword[_TAREA_ACTUAL], eax
+   359 000001D3 0F22D8                     mov cr3, eax
+   360 000001D6 C605[00000000]03           mov BYTE[_CONTADOR_TAREA_2], _OFFSET_TAREAS
+   361                                  
+   362 000001DD EB02                       jmp CONSULTAR_CARGADO_TAREA_USUARIO
+   363 000001DF 7476                       je FIN2
+   364                                  
+   365                                  
+   366                                     CONSULTAR_CARGADO_TAREA_USUARIO:
+   367 000001E1 66A1[00000000]             mov ax, [_TSS_0_cs]
+   368 000001E7 668CCB                     mov bx, cs
+   369 000001EA 6639D8                     cmp ax,bx
+   370 000001ED 7508                       jne CARGADO_PILA
+   371                                  
+   372                                     CARGADO_REGISTROS:
+   373 000001EF 8B25[00000000]             mov esp, dword [_TSS_0_esp]
+   374                                  
+   375 000001F5 EB14                       jmp CARGANDO
+   376                                  
+   377                                     CARGADO_PILA:
+   378 000001F7 66A1[00000000]             mov ax, [_TSS_0_ss]
+   379 000001FD 25FFFF0000                 and eax, 0x0000FFFF
+   380 00000202 50                         push eax
+   381 00000203 A1[00000000]               mov eax, [_TSS_0_esp]
+   382 00000208 50                         push eax
+   383 00000209 EB00                       jmp CARGANDO
+   384                                  
+   385                                  
+   386                                  
+   387                                     CARGANDO:
+   388 0000020B 66A1[00000000]             mov word ax, [_TSS_0_ds]
+   389 00000211 8ED8                       mov ds, ax
+   390 00000213 66A1[00000000]             mov word ax, [_TSS_0_es]
+   391                                  
+   392 00000219 8EC0                       mov es, ax
+   393                                  
+   394 0000021B A1[00000000]               mov eax, dword [_TSS_0_eax] 
+   395 00000220 8B1D[00000000]             mov ebx, dword [_TSS_0_ebx]
+   396 00000226 8B0D[00000000]             mov ecx, dword [_TSS_0_ecx]
+   397 0000022C 8B15[00000000]             mov edx, dword [_TSS_0_edx]
+   398 00000232 8B35[00000000]             mov esi, dword [_TSS_0_esi]
+   399 00000238 8B3D[00000000]             mov edi, dword [_TSS_0_edi]
+   400                                  
+   401 0000023E 8B2D[00000000]             mov ebp, dword [_TSS_0_ebp]
+   402                                  
+   403 00000244 A1[00000000]               mov eax, dword [_TSS_0_eflags]          ; Cargo EFLAGS de la tarea actual
+   404 00000249 50                         push eax
+   405 0000024A 66A1[00000000]             mov ax, word [_TSS_0_cs]                ; Cargo CS de la tarea actual
+   406 00000250 50                         push eax
+   407 00000251 A1[00000000]               mov eax ,dword [_TSS_0_eip]             ; Cargo EIP de la tarea actual
+   408 00000256 50                         push eax
+   409                                  
+   410                                  
+   411                                  
+   412                                  
+   413                                  FIN2:
+   414 00000257 CF                      iret
+   415                                  
+   416                                  
+   417                                  
+   418                                  
+   419                                  isr33_handler_KEYBOARD:
+   420                                  
+   421 00000258 60                         pushad
+   422 00000259 B020                       mov al,0x20                              ; Codigo para avisar al PIC que atendi la int 
+   423 0000025B E620                       out 0x20,al
+   424                                  
+   425                                  
+   426                                    INT_TECLA:
+   427                                  
+   428 0000025D E8(08000000)                  call LECTURA_TECLA
+   429                                        
+   430                                  
+   431                                      T_0:
+   432 00000262 3C0B                          cmp al, TECLA_0
+   433 00000264 B300                          mov bl, 0x0 ; 
+   434 00000266 7460                          jz GUARDADO_HEXA
+   435                                  
+   436                                      T_1:
+   437 00000268 3C02                          cmp al, TECLA_1
+   438 0000026A B301                          mov bl, 0x1 ;  ; 
+   439 0000026C 745A                          jz GUARDADO_HEXA
+   440                                  
+   441                                      T_2:
+   442 0000026E 3C03                          cmp al, TECLA_2 ; 
+   443 00000270 B302                          mov bl, 0x2 ; 
+   444 00000272 7454                          jz GUARDADO_HEXA
+   445                                  
+   446                                      T_3:
+   447 00000274 3C04                          cmp al, TECLA_3 ; 
+   448 00000276 B303                          mov bl, 0x3
+   449 00000278 744E                          jz GUARDADO_HEXA   
+   450                                  
+   451                                      T_4:
+   452 0000027A 3C05                          cmp al, TECLA_4
+   453 0000027C B304                          mov bl, 0x4 ; 
+   454 0000027E 7448                          jz GUARDADO_HEXA 
+   455                                  
+   456                                      T_5:
+   457 00000280 3C06                          cmp al, TECLA_5 ; 
+   458 00000282 B305                          mov bl, 0x5
+   459 00000284 7442                          jz GUARDADO_HEXA   
+   460                                  
+   461                                      T_6:
+   462 00000286 3C07                          cmp al, TECLA_6
+   463 00000288 B306                          mov bl, 0x6 ; 
+   464 0000028A 743C                          jz GUARDADO_HEXA   
+   465                                  
+   466                                      T_7:
+   467 0000028C 3C08                          cmp al, TECLA_7 ; 
+   468 0000028E B307                          mov bl, 0x7
+   469 00000290 7436                          jz GUARDADO_HEXA     
+   470                                      
+   471                                      T_8:
+   472 00000292 3C09                          cmp al, TECLA_8
+   473 00000294 B308                          mov bl, 0x8 ; 
+   474 00000296 7430                          jz GUARDADO_HEXA
+   475                                      
+   476                                      T_9:
+   477 00000298 3C0A                          cmp al, TECLA_9 
+   478 0000029A B309                          mov bl, 0x9 
+   479 0000029C 742A                          jz GUARDADO_HEXA  
+   480                                      
+   481                                      T_A:
+   482 0000029E 3C1E                          cmp al, TECLA_A ; 
+   483 000002A0 B30A                          mov bl, 0xA
+   484 000002A2 7424                          jz GUARDADO_HEXA
+   485                                      
+   486                                      T_B:
+   487 000002A4 3C30                          cmp al, TECLA_B 
+   488 000002A6 B30B                          mov bl, 0xB 
+   489 000002A8 741E                          jz GUARDADO_HEXA  
+   490                                      
+   491                                      T_C:
+   492 000002AA 3C2E                          cmp al, TECLA_C ; 
+   493 000002AC B30C                          mov bl, 0xC
+   494 000002AE 7418                          jz GUARDADO_HEXA 
+   495                                      
+   496                                      T_D:
+   497 000002B0 3C20                          cmp al, TECLA_D 
+   498 000002B2 B30D                          mov bl, 0xD
+   499 000002B4 7412                          jz GUARDADO_HEXA 
+   500                                      
+   501                                      T_E:
+   502 000002B6 3C12                          cmp al, TECLA_E 
+   503 000002B8 B30E                          mov bl, 0xE
+   504 000002BA 740C                          jz GUARDADO_HEXA 
+   505                                  
+   506                                      T_F:
+   507 000002BC 3C21                          cmp al, TECLA_F 
+   508 000002BE B30F                          mov bl, 0xF
+   509 000002C0 7406                          jz GUARDADO_HEXA 
+   510                                  
+   511                                      T_ENTER:
+   512 000002C2 3C1C                          cmp al, TECLA_ENTER ; 
+   513 000002C4 740D                          jz FIN
+   514                                  
+   515                                  
+   516 000002C6 EB24                      jmp RESET
+   517                                  
+   518                                  
+   519                                      GUARDADO_HEXA:
+   520 000002C8 6653                        push bx
+   521 000002CA E8(00000000)                call CARGAR_TABLA
+   522 000002CF 665B                        pop bx
+   523 000002D1 EB19                        jmp RESET
+   524                                  
+   525                                  
+   526                                      FIN:
+   527                                        
+   528 000002D3 803D[00000000]00              cmp byte[_CONTADOR_TECLAS],0x0    ; Me fijo si estoy parado en la primer pocision del vector
+   529 000002DA 7402                          jz CASO_TECLA_ENTER_SOLA
+   530 000002DC EB09                          JMP CASO_NORMAL
+   531                                  
+   532                                  
+   533                                        CASO_TECLA_ENTER_SOLA:
+   534 000002DE 803D[00000000]00              cmp byte[_flag_16_TECLAS],0x0    ; Me fijo si la cantidad de teclas fue  realmente 0 o multiplo de 16
+   535 000002E5 7405                          jz RESET                         ; Si fue 0, es porque solo se presiono la tecla ENTER
+   536                                  
+   537                                        CASO_NORMAL:
+   538 000002E7 E8(00000000)                  call CARGAR_TABLA_2
+   539                                        
+   540                                  
+   541                                   RESET:
+   542                                  
+   543 000002EC 61                       popad
+   544 000002ED CF                       iret
+   545                                  
+   546                                  
+   547                                  isr80_handler_SYS_CALL:
+   548                                      
+   549 000002EE 6687DB                      xchg bx, bx
+   550                                  
+   551 000002F1 6683F801                    cmp ax, 0x01
+   552 000002F5 7408                        je HALT
+   553                                  
+   554 000002F7 6683F802                    cmp ax, 0x02
+   555 000002FB 7409                        je READ
+   556 000002FD EB14                        jmp FIN3
+   557                                  
+   558                                      HALT:
+   559                                  
+   560 000002FF E810000000                  call td3_halt
+   561 00000304 EB0D                        jmp FIN3
+   562                                  
+   563                                  
+   564                                      READ:
+   565 00000306 6A01                        push buffer
+   566 00000308 6A01                        push num_bytes
+   567 0000030A E808000000                  call td3_read
+   568 0000030F 58                          pop eax
+   569 00000310 58                          pop eax
+   570 00000311 EB00                        jmp FIN3
+   571                                  
+   572                                      FIN3:
+   573 00000313 C3                          ret
+   574                                  
+   575                                   
+   576                                      td3_halt:
+   577 00000314 FB                          sti
+   578 00000315 F4                          hlt
+   579 00000316 C3                          ret
+   580                                  
+   581                                      td3_read:
+   582 00000317 89E5                        mov ebp, esp
+   583 00000319 8B4504                      mov eax, [ebp + 4]
+   584                                             
+   585 0000031C C3                          ret
+   586                                  
